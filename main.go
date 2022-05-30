@@ -7,16 +7,8 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func main() {
-	fmt.Println("start")
-	ctx := context.Background()
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr: ":6379",
-	})
-	_ = rdb.FlushDB(ctx).Err()
-
-	var incrLimit = redis.NewScript(`
+func incrLue() *redis.Script {
+	return redis.NewScript(`
 		local key = KEYS[1]
 		local limit = tonumber(ARGV[1])
 		redis.log(redis.LOG_NOTICE, "key", key, "limit", limit)
@@ -27,6 +19,18 @@ func main() {
 		end
 		return value
 	`)
+}
+
+func main() {
+	fmt.Println("start")
+	ctx := context.Background()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr: ":6379",
+	})
+	_ = rdb.FlushDB(ctx).Err()
+
+	var incrLimit = incrLue()
 	keys := []string{"hello"}
 	limit := []interface{}{10}
 
