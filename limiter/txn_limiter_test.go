@@ -1,4 +1,4 @@
-package main
+package limiter
 
 import (
 	"context"
@@ -14,22 +14,16 @@ func init() {
 	})
 }
 
-func TestIncrLimit(t *testing.T) {
+func TestIncrLimitPipeline(t *testing.T) {
 	ctx := context.Background()
 	_ = rdb.FlushDB(ctx).Err()
 
-	var incrLimit = incrLue()
-	keys := []string{"hello"}
-	limit := []interface{}{10}
-
+	limit := TxnLimiter(rdb)
 	thread := 20
-	//var wg sync.WaitGroup
 	ch := make(chan bool, thread)
 	for i := 1; i <= thread; i++ {
-		//wg.Add(1)
 		go func(i int) {
-			//defer wg.Done()
-			_, err := incrLimit.Run(ctx, rdb, keys, limit).Int()
+			_, err := limit.IncrWithLimit("key", 10)
 			if err != nil {
 				ch <- false
 			} else {
@@ -45,7 +39,6 @@ func TestIncrLimit(t *testing.T) {
 		}
 
 	}
-	//wg.Wait()
 	expected := 10
 	if count != expected {
 		t.Errorf("expect %v got %v\n", expected, count)
